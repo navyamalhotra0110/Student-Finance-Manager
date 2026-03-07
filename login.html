@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — FinTrack</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ── Login Page Specific ── */
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(0,212,255,0.05);
+      animation: fadeInUp 0.6s ease both;
+    }
+
+    .login-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .login-logo-icon {
+      width: 60px; height: 60px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+      box-shadow: var(--shadow-glow-cyan);
+      animation: glow-pulse 3s infinite;
+    }
+
+    .login-logo h1 {
+      font-family: var(--font-display);
+      font-size: 2rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .login-logo p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .login-divider {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .login-divider::before,
+    .login-divider::after {
+      content: '';
+      flex: 1; height: 1px;
+      background: var(--glass-border);
+    }
+    .login-divider span {
+      font-size: 0.75rem; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 0.75rem;
+    }
+
+    .user-chip {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 10px 14px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+      width: 100%;
+      text-align: left;
+    }
+    .user-chip:hover {
+      border-color: var(--cyan);
+      background: rgba(0,212,255,0.06);
+    }
+    .user-chip .chip-avatar { font-size: 1.3rem; }
+    .user-chip .chip-info { flex: 1; }
+    .user-chip .chip-name {
+      font-weight: 600; font-size: 0.92rem;
+      display: block;
+    }
+    .user-chip .chip-sub {
+      font-size: 0.75rem; color: var(--text-muted);
+    }
+    .user-chip .chip-delete {
+      color: var(--text-muted);
+      font-size: 0.9rem; padding: 4px;
+      border-radius: 4px;
+      transition: var(--transition);
+    }
+    .user-chip .chip-delete:hover {
+      color: var(--pink);
+      background: rgba(255,0,110,0.1);
+    }
+
+    .login-footer {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particle-canvas"></canvas>
+  <div class="grid-bg"></div>
+  <div class="noise"></div>
+
+  <div class="login-page">
+    <div class="login-card">
+
+      <!-- Logo -->
+      <div class="login-logo">
+        <div class="login-logo-icon">💎</div>
+        <h1>FinTrack</h1>
+        <p>Your personal student finance manager</p>
+      </div>
+
+      <!-- New User Login -->
+      <div class="form-group">
+        <label class="form-label">Enter Your Username</label>
+        <input
+          type="text"
+          id="login-username"
+          class="form-control"
+          placeholder="e.g. navya, rahul, priya..."
+          maxlength="30"
+          autocomplete="off"
+          style="font-size:1.05rem"
+        />
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem">
+          No password needed. Each username has its own private data.
+        </p>
+      </div>
+      <button class="btn btn-primary w-full btn-lg" onclick="handleLogin()">
+        🚀 Continue as <span id="login-btn-name">...</span>
+      </button>
+
+      <!-- Existing Users -->
+      <div id="existing-users-section" style="display:none">
+        <div class="login-divider"><span>or pick a profile</span></div>
+        <div class="user-list" id="user-list"></div>
+      </div>
+
+      <div class="login-footer">
+        🔒 All data is stored locally in your browser · 100% Private
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Update button label as user types
+    const usernameInput = document.getElementById('login-username');
+    const btnName = document.getElementById('login-btn-name');
+
+    usernameInput.addEventListener('input', () => {
+      const val = usernameInput.value.trim() || '...';
+      btnName.textContent = val;
+    });
+
+    // Submit on Enter
+    usernameInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') handleLogin();
+    });
+
+    // Load and render saved users on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderUserList();
+    });
+
+    function renderUserList() {
+      const users = Auth.getAllUsers();
+      const section = document.getElementById('existing-users-section');
+      const list = document.getElementById('user-list');
+
+      if (!users.length) { section.style.display = 'none'; return; }
+
+      section.style.display = 'block';
+      list.innerHTML = users.map(u => {
+        const profile = Auth.getUserProfile(u);
+        const avatar = profile?.avatar || '👤';
+        const college = profile?.college || 'Student';
+        return `
+          <button class="user-chip" onclick="loginAs('${u}')">
+            <span class="chip-avatar">${avatar}</span>
+            <span class="chip-info">
+              <span class="chip-name">${u}</span>
+              <span class="chip-sub">${college}</span>
+            </span>
+            <span class="chip-delete" onclick="event.stopPropagation();removeUser('${u}')" title="Remove">✕</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function loginAs(username) {
+      Auth.login(username);
+      window.location.href = 'dashboard.html';
+    }
+
+    function removeUser(username) {
+      if (!confirm(`Remove all data for "${username}"? This cannot be undone.`)) return;
+      Auth.deleteUser(username);
+      renderUserList();
+    }
+
+    function handleLogin() {
+      const raw = document.getElementById('login-username').value.trim();
+      if (!raw) { alert('Please enter a username!'); return; }
+      // Sanitize: only alphanumeric, underscore, hyphen
+      const username = raw.replace(/[^a-zA-Z0-9_\-]/g, '').toLowerCase();
+      if (!username) { alert('Username can only contain letters, numbers, _ and -'); return; }
+      Auth.login(username);
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+</body>
+</html>
